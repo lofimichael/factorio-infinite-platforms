@@ -196,7 +196,7 @@ function gui.create_main_panel(player)
   local enable_label = enable_flow.add{
     type = "label",
     caption = {"space-platform-automation.panel-enabled"},
-    style = "heading_1_label"
+    style = "bold_label"
   }
 
   -- Colored indicator sprite-button

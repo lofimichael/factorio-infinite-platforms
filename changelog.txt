@@ -34,6 +34,16 @@ Date: 2025
     - Smart timeout: Platforms activate after 5 minutes of no construction progress (handles unreachable ghosts)
     - Progress tracking: Monitors ghost entity count every 2 seconds to detect construction completion or stalls
     - Schedules preserved: Blueprint system automatically copies platform schedules (no manual intervention needed)
+  GUI Improvements (2.0.3.3):
+    - Enable Auto-Creation moved to top with bold text and colored indicator (green checkmark/red X)
+    - Toggle button and panel now auto-hide when exiting remote view
+    - Panel auto-closes when leaving remote view, remembers preference when returning
+    - Fixed close/reopen bug where panel would auto-reopen after manual close
+    - Shortened planet dropdown width to 150px
+    - Added bottom description: "Completed platforms will be set on automatic."
+    - Panel starts closed on save load, respects user preference
+  Bugfixes (2.0.3.3):
+    - CRITICAL: Fixed crash caused by invalid style "heading_1_label" (changed to "bold_label")
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.2
