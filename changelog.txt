@@ -44,6 +44,19 @@ Date: 2025
     - Panel starts closed on save load, respects user preference
   Bugfixes (2.0.3.3):
     - CRITICAL: Fixed crash caused by invalid style "heading_1_label" (changed to "bold_label")
+  GUI Improvements (2.0.3.4):
+    - Changed disabled indicator from close_fat to not_available (much more visible red X)
+    - Added "Enable Debug Logging" checkbox to panel for user-controlled debug output
+    - All 12 debug print statements now conditional on debug_logging flag
+    - Updated mod settings description with explicit min/max range (60-3600 ticks / 1-60 seconds)
+  Technical (2.0.3.4):
+    - Added debug_logging flag to player_data (defaults to false)
+    - Debug messages only show when explicitly enabled by user
+    - Prevents console spam during normal operation
+  Settings (2.0.3.4):
+    - Lowered check interval minimum from 60 to 1 tick (allows ultra-responsive automation)
+    - Added strong performance warning for values below 60 ticks
+    - Updated range display: 1-3600 ticks (0.017-60 seconds)
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.2

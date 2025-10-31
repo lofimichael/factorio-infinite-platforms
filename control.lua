@@ -17,7 +17,8 @@ script.on_init(function()
       target_planet = "nauvis",
       copy_platform_index = nil,
       cached_blueprint_string = nil,
-      panel_manually_closed = true
+      panel_manually_closed = true,
+      debug_logging = false
     }
 
     -- Initialize GUI
@@ -34,7 +35,8 @@ script.on_event(defines.events.on_player_created, function(event)
     target_planet = "nauvis",
     copy_platform_index = nil,
     cached_blueprint_string = nil,
-    panel_manually_closed = true
+    panel_manually_closed = true,
+    debug_logging = false
   }
 
   local player = game.players[event.player_index]
@@ -148,7 +150,7 @@ local function copy_platform_structure(player_index, target_platform)
   local blueprint_string = player_data.cached_blueprint_string
 
   if not blueprint_string then
-    if player then
+    if player and player_data and player_data.debug_logging then
       player.print("[∞ SPA] DEBUG: No cached blueprint string")
     end
     return false
@@ -156,13 +158,13 @@ local function copy_platform_structure(player_index, target_platform)
 
   local target_surface = target_platform.surface
   if not target_surface or not target_surface.valid then
-    if player then
+    if player and player_data and player_data.debug_logging then
       player.print("[∞ SPA] DEBUG: Target surface not valid")
     end
     return false
   end
 
-  if player then
+  if player and player_data and player_data.debug_logging then
     player.print("[∞ SPA] DEBUG: Creating blueprint inventory...")
   end
 
@@ -186,7 +188,7 @@ local function copy_platform_structure(player_index, target_platform)
     return false
   end
 
-  if player then
+  if player and player_data and player_data.debug_logging then
     player.print("[∞ SPA] DEBUG: Importing blueprint...")
   end
 
@@ -200,7 +202,7 @@ local function copy_platform_structure(player_index, target_platform)
     return false
   end
 
-  if player then
+  if player and player_data and player_data.debug_logging then
     player.print("[∞ SPA] DEBUG: Building blueprint on platform...")
   end
 
@@ -239,7 +241,7 @@ local function copy_platform_structure(player_index, target_platform)
   -- Count initial ghost entities
   local ghost_count = target_surface.count_entities_filtered{name = "entity-ghost"}
 
-  if player then
+  if player and player_data and player_data.debug_logging then
     player.print("[∞ SPA] DEBUG: Platform paused with " .. ghost_count .. " ghosts pending construction")
   end
 
@@ -395,7 +397,8 @@ script.on_event(defines.events.on_tick, function(event)
           -- Check if surface and hub are ready
           if platform.surface and platform.surface.valid and platform.hub and platform.hub.valid then
             local player = game.players[pending.player_index]
-            if player and player.valid then
+            local player_data = storage.player_data[pending.player_index]
+            if player and player.valid and player_data and player_data.debug_logging then
               player.print("[∞ SPA] DEBUG: Periodic check found ready platform, attempting copy...")
             end
 
@@ -479,7 +482,8 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
 
   -- DEBUG: Log state changes
   local player = game.players[pending.player_index]
-  if player and player.valid then
+  local player_data = storage.player_data[pending.player_index]
+  if player and player.valid and player_data and player_data.debug_logging then
     player.print("[∞ SPA] DEBUG: Platform state changed to: " .. tostring(event.new_state))
   end
 
@@ -502,7 +506,7 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
   end
 
   if not is_ready then
-    if player and player.valid then
+    if player and player.valid and player_data and player_data.debug_logging then
       player.print("[∞ SPA] DEBUG: Platform not in ready state yet")
     end
     return
@@ -510,20 +514,20 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
 
   -- CRITICAL: Check if surface actually exists and hub is ready
   if not platform.surface or not platform.surface.valid then
-    if player and player.valid then
+    if player and player.valid and player_data and player_data.debug_logging then
       player.print("[∞ SPA] DEBUG: Surface not valid yet")
     end
     return
   end
 
   if not platform.hub or not platform.hub.valid then
-    if player and player.valid then
+    if player and player.valid and player_data and player_data.debug_logging then
       player.print("[∞ SPA] DEBUG: Hub not valid yet")
     end
     return
   end
 
-  if player and player.valid then
+  if player and player.valid and player_data and player_data.debug_logging then
     player.print("[∞ SPA] DEBUG: Platform ready! Attempting to copy...")
   end
 

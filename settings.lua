@@ -7,7 +7,7 @@ data:extend({
     name = "spa-check-interval",
     setting_type = "runtime-global",
     default_value = 300,
-    minimum_value = 60,
+    minimum_value = 1,
     maximum_value = 3600,
     order = "a"
   }

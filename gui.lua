@@ -200,12 +200,20 @@ function gui.create_main_panel(player)
   }
 
   -- Colored indicator sprite-button
-  local indicator_sprite = player_data.enabled and "utility/check_mark_green" or "utility/close_fat"
+  local indicator_sprite = player_data.enabled and "utility/check_mark_green" or "utility/not_available"
   enable_flow.add{
     type = "sprite-button",
     name = "spa_enable_indicator",
     sprite = indicator_sprite,
     style = "slot_button"
+  }
+
+  -- Debug logging toggle (smaller, less prominent)
+  frame.add{
+    type = "checkbox",
+    name = "spa_debug_checkbox",
+    caption = {"space-platform-automation.panel-debug"},
+    state = player_data.debug_logging or false
   }
 
   frame.add{type = "line"}
@@ -374,7 +382,7 @@ function gui.update_enable_indicator(player)
     if enable_flow and enable_flow.valid and enable_flow.children[2] then
       local indicator = enable_flow.children[2]  -- Second element is the sprite-button
       if indicator and indicator.name == "spa_enable_indicator" then
-        indicator.sprite = player_data.enabled and "utility/check_mark_green" or "utility/close_fat"
+        indicator.sprite = player_data.enabled and "utility/check_mark_green" or "utility/not_available"
       end
     end
   end
@@ -406,6 +414,9 @@ function gui.on_gui_click(event)
     -- Update indicator sprite and status
     gui.update_enable_indicator(player)
     gui.update_status(player)
+  elseif element.name == "spa_debug_checkbox" then
+    -- Toggle debug logging
+    storage.player_data[player.index].debug_logging = element.state
   end
 end
 
