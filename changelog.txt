@@ -47,12 +47,13 @@ Date: 2025
   GUI Improvements (2.0.3.4):
     - Changed disabled indicator from close_fat to not_available (much more visible red X)
     - Added "Enable Debug Logging" checkbox to panel for user-controlled debug output
-    - All 12 debug print statements now conditional on debug_logging flag
+    - All 16 print statements now conditional on debug_logging flag (12 debug + 4 success messages)
     - Updated mod settings description with explicit min/max range (60-3600 ticks / 1-60 seconds)
   Technical (2.0.3.4):
     - Added debug_logging flag to player_data (defaults to false)
     - Debug messages only show when explicitly enabled by user
     - Prevents console spam during normal operation
+    - Platform creation and blueprint copy success messages now also conditional on debug flag (4 additional messages)
   Settings (2.0.3.4):
     - Lowered check interval minimum from 60 to 1 tick (allows ultra-responsive automation)
     - Added strong performance warning for values below 60 ticks

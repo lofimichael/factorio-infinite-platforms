@@ -113,7 +113,12 @@ local function cache_platform_blueprint(player, platform_index)
   inventory.destroy()
 
   storage.player_data[player.index].cached_blueprint_string = blueprint_string
-  player.print("[∞ Space Platform Automation] Platform blueprinted successfully")
+
+  local player_data = storage.player_data[player.index]
+  if player_data and player_data.debug_logging then
+    player.print("[∞ Space Platform Automation] Platform blueprinted successfully")
+  end
+
   return true
 end
 

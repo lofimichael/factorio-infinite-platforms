@@ -345,7 +345,10 @@ local function create_platform(player)
       copy_source_index = source_platform.index
     }
 
-    player.print("[∞ Space Platform Automation] Created platform: " .. platform_name)
+    local player_data = storage.player_data[player.index]
+    if player_data and player_data.debug_logging then
+      player.print("[∞ Space Platform Automation] Created platform: " .. platform_name)
+    end
   end
 
   return platform
@@ -407,7 +410,8 @@ script.on_event(defines.events.on_tick, function(event)
 
             if success then
               local player = game.players[pending.player_index]
-              if player and player.valid then
+              local player_data = storage.player_data[pending.player_index]
+              if player and player.valid and player_data and player_data.debug_logging then
                 player.print("[∞ Space Platform Automation] Platform structure copied to: " .. platform.name)
               end
 
@@ -536,7 +540,8 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
 
   if success then
     local player = game.players[pending.player_index]
-    if player and player.valid then
+    local player_data = storage.player_data[pending.player_index]
+    if player and player.valid and player_data and player_data.debug_logging then
       player.print("[∞ Space Platform Automation] Platform structure copied to: " .. platform.name)
     end
 
