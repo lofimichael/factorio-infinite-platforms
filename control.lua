@@ -16,7 +16,8 @@ script.on_init(function()
       enabled = false,
       target_planet = "nauvis",
       copy_platform_index = nil,
-      cached_blueprint_string = nil
+      cached_blueprint_string = nil,
+      panel_manually_closed = true
     }
 
     -- Initialize GUI
@@ -32,7 +33,8 @@ script.on_event(defines.events.on_player_created, function(event)
     enabled = false,
     target_planet = "nauvis",
     copy_platform_index = nil,
-    cached_blueprint_string = nil
+    cached_blueprint_string = nil,
+    panel_manually_closed = true
   }
 
   local player = game.players[event.player_index]

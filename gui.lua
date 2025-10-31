@@ -183,8 +183,32 @@ function gui.create_main_panel(player)
   -- Position to right side of screen
   frame.location = {x = 220, y = 100}
 
-  -- Start visible if in Remote View
-  frame.visible = (player.controller_type == defines.controllers.remote)
+  -- Start closed (respects panel_manually_closed preference)
+  frame.visible = false
+
+  -- Enable Auto-Creation section (moved to top, bold)
+  local enable_flow = frame.add{
+    type = "flow",
+    direction = "horizontal"
+  }
+  enable_flow.style.vertical_align = "center"
+
+  local enable_label = enable_flow.add{
+    type = "label",
+    caption = {"space-platform-automation.panel-enabled"},
+    style = "heading_1_label"
+  }
+
+  -- Colored indicator sprite-button
+  local indicator_sprite = player_data.enabled and "utility/check_mark_green" or "utility/close_fat"
+  enable_flow.add{
+    type = "sprite-button",
+    name = "spa_enable_indicator",
+    sprite = indicator_sprite,
+    style = "slot_button"
+  }
+
+  frame.add{type = "line"}
 
   -- Platform copy dropdown
   local copy_flow = frame.add{
@@ -206,7 +230,7 @@ function gui.create_main_panel(player)
     selected_index = 1
   }
 
-  -- Planet dropdown
+  -- Planet dropdown (shortened)
   local planet_flow = frame.add{
     type = "flow",
     direction = "horizontal"
@@ -219,12 +243,13 @@ function gui.create_main_panel(player)
   local planet_items, planet_mapping = get_space_location_dropdown_items(player)
   storage.player_data[player.index].planet_mapping = planet_mapping
 
-  planet_flow.add{
+  local planet_dropdown = planet_flow.add{
     type = "drop-down",
     name = "spa_planet_dropdown",
     items = planet_items,
     selected_index = 1
   }
+  planet_dropdown.style.width = 150
 
   frame.add{type = "line"}
 
@@ -261,30 +286,34 @@ function gui.create_main_panel(player)
 
   frame.add{type = "line"}
 
-  -- Enable checkbox
-  frame.add{
-    type = "checkbox",
-    name = "spa_enabled_checkbox",
-    caption = {"space-platform-automation.panel-enabled"},
-    state = player_data.enabled or false
-  }
-
   -- Status
   frame.add{
     type = "label",
     name = "spa_status_label",
     caption = gui.get_status_text(player)
   }
+
+  -- Description at bottom
+  local description = frame.add{
+    type = "label",
+    caption = {"space-platform-automation.panel-description"}
+  }
+  description.style.font_color = {r = 0.7, g = 0.7, b = 0.7}
 end
 
 --- Toggle panel visibility
 --- @param player LuaPlayer The player
 function gui.toggle_panel(player)
   local panel = player.gui.screen[PANEL_NAME]
+  local player_data = storage.player_data[player.index]
+
   if panel then
     panel.visible = not panel.visible
+    -- Track manual close state
+    player_data.panel_manually_closed = not panel.visible
   else
     gui.create_main_panel(player)
+    player_data.panel_manually_closed = false
   end
 end
 
@@ -300,8 +329,24 @@ end
 --- @param player LuaPlayer The player
 function gui.update_panel_visibility(player)
   local panel = player.gui.screen[PANEL_NAME]
+  local button = player.gui.top[TOGGLE_BUTTON_NAME]
+  local player_data = storage.player_data[player.index]
+  local is_remote = (player.controller_type == defines.controllers.remote)
+
+  -- Update toggle button visibility (only show in remote view)
+  if button then
+    button.visible = is_remote
+  end
+
+  -- Update panel visibility
   if panel then
-    panel.visible = (player.controller_type == defines.controllers.remote)
+    if is_remote then
+      -- In remote view: respect user preference
+      panel.visible = not player_data.panel_manually_closed
+    else
+      -- Not in remote view: always force closed
+      panel.visible = false
+    end
   end
 end
 
@@ -313,6 +358,24 @@ function gui.update_status(player)
     local status_label = panel["spa_status_label"]
     if status_label then
       status_label.caption = gui.get_status_text(player)
+    end
+  end
+end
+
+--- Update enable indicator sprite
+--- @param player LuaPlayer The player
+function gui.update_enable_indicator(player)
+  local panel = player.gui.screen[PANEL_NAME]
+  local player_data = storage.player_data[player.index]
+
+  if panel then
+    -- Navigate through the flow to find the sprite-button
+    local enable_flow = panel.children[1]  -- First element is the enable flow
+    if enable_flow and enable_flow.valid and enable_flow.children[2] then
+      local indicator = enable_flow.children[2]  -- Second element is the sprite-button
+      if indicator and indicator.name == "spa_enable_indicator" then
+        indicator.sprite = player_data.enabled and "utility/check_mark_green" or "utility/close_fat"
+      end
     end
   end
 end
@@ -335,8 +398,13 @@ function gui.on_gui_click(event)
 
   if element.name == TOGGLE_BUTTON_NAME then
     gui.toggle_panel(player)
-  elseif element.name == "spa_enabled_checkbox" then
-    storage.player_data[player.index].enabled = element.state
+  elseif element.name == "spa_enable_indicator" then
+    -- Toggle enabled state
+    local player_data = storage.player_data[player.index]
+    player_data.enabled = not player_data.enabled
+
+    -- Update indicator sprite and status
+    gui.update_enable_indicator(player)
     gui.update_status(player)
   end
 end
