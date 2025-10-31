@@ -186,7 +186,7 @@ function gui.create_main_panel(player)
   }
 
   -- Position to right side of screen
-  frame.location = {x = 220, y = 100}
+  frame.location = {x = 370, y = 100}
 
   -- Start closed (respects panel_manually_closed preference)
   frame.visible = false
@@ -289,13 +289,6 @@ function gui.create_main_panel(player)
     text = player_data.custom_name_pattern or "Platform-{counter}"
   }
   pattern_field.style.width = 250
-
-  local preview_label = naming_flow.add{
-    type = "label",
-    name = "spa_naming_preview",
-    caption = {"space-platform-automation.panel-naming-preview", naming.preview_next_name(player.index)}
-  }
-  preview_label.style.font_color = {r = 0.5, g = 0.8, b = 1}
 
   frame.add{type = "line"}
 
@@ -472,15 +465,6 @@ function gui.on_gui_text_changed(event)
       pattern = nil
     end
     storage.player_data[player.index].custom_name_pattern = pattern
-
-    -- Update preview
-    local panel = player.gui.screen[PANEL_NAME]
-    if panel then
-      local preview = panel["spa_naming_preview"]
-      if preview then
-        preview.caption = {"space-platform-automation.panel-naming-preview", naming.preview_next_name(player.index)}
-      end
-    end
   end
 end
 

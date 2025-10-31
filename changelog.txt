@@ -1,6 +1,12 @@
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.3
 Date: 2025
+  GUI/UX Improvements (2.0.3.6):
+    - Adjusted panel default position 150px to the right (x=370) for better screen placement
+    - Removed preview label from naming section (cleaner interface)
+    - Enhanced settings warning: explicit "60 platforms/second at value 1" warning with newline
+    - Updated mod descriptions (info.json, README) to include naming pattern variables
+    - Drastically simplified README from 197 to 44 lines (essential info only)
   Bugfixes (2.0.3.5):
     - CRITICAL: Fixed platform creation only working when viewing target planet surface
     - Platform creation now works from any view: Remote View, space, any planet surface
