@@ -10,6 +10,8 @@ Automatically creates infinite space platforms by copying existing platforms. Wh
 4. Enable auto-creation
 5. Platforms will be created automatically when starter packs are available
 
+![Platform Automation Panel](desc.jpeg)
+
 ## How It Works
 
 The mod checks every 5 seconds (configurable) for starter pack availability. When available and auto-creation is enabled, it creates a new platform at your configured planet, copies the blueprint from your source platform, and automatically activates it when construction completes.

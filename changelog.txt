@@ -7,6 +7,11 @@ Date: 2025
     - Enhanced settings warning: explicit "60 platforms/second at value 1" warning with newline
     - Updated mod descriptions (info.json, README) to include naming pattern variables
     - Drastically simplified README from 197 to 44 lines (essential info only)
+  Development (2.0.3.6):
+    - Added package-mod.sh script for Factorio-compliant mod packaging
+    - Automatically creates properly named zip files from info.json
+    - Excludes dev files (.git, .DS_Store, install scripts, etc.)
+    - Includes desc.jpeg in package and displays in README below Quick Start
   Bugfixes (2.0.3.5):
     - CRITICAL: Fixed platform creation only working when viewing target planet surface
     - Platform creation now works from any view: Remote View, space, any planet surface
