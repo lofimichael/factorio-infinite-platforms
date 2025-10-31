@@ -20,6 +20,14 @@ Date: 2025
     - Removed force_data storage (no more blueprint tracking)
     - Added gui.update_status() for efficient status updates
     - Simplified player_data structure
+  Bugfixes (2.0.3.1):
+    - Fixed field name inconsistency (needs_blueprint vs needs_copy)
+    - Fixed race condition where blueprint application would fail if surface/hub not ready
+    - Added periodic retry mechanism (every 60 ticks) for pending platforms
+    - Added comprehensive debug logging for blueprint application
+    - Added error handling for import_stack() return values
+    - Added force validation in periodic check
+    - Fixed tile copying: changed always_include_tiles from false to true for contiguous ground
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.2

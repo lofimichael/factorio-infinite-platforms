@@ -15,7 +15,8 @@ script.on_init(function()
       platform_counter = 0,
       enabled = false,
       target_planet = "nauvis",
-      copy_platform_index = nil
+      copy_platform_index = nil,
+      cached_blueprint_string = nil
     }
 
     -- Initialize GUI
@@ -30,7 +31,8 @@ script.on_event(defines.events.on_player_created, function(event)
     platform_counter = 0,
     enabled = false,
     target_planet = "nauvis",
-    copy_platform_index = nil
+    copy_platform_index = nil,
+    cached_blueprint_string = nil
   }
 
   local player = game.players[event.player_index]
@@ -134,34 +136,99 @@ local function get_player_planet(player)
   return "nauvis"
 end
 
---- Copy entities from source platform to target platform
---- @param source_platform LuaSpacePlatform The source platform
+--- Apply cached blueprint to target platform
+--- @param player_index uint The player index
 --- @param target_platform LuaSpacePlatform The target platform
 --- @return boolean success Whether copy succeeded
-local function copy_platform_structure(source_platform, target_platform)
-  local source_surface = source_platform.surface
-  local target_surface = target_platform.surface
+local function copy_platform_structure(player_index, target_platform)
+  local player = game.players[player_index]
+  local player_data = storage.player_data[player_index]
+  local blueprint_string = player_data.cached_blueprint_string
 
-  if not source_surface or not source_surface.valid then
-    return false
-  end
-
-  if not target_surface or not target_surface.valid then
-    return false
-  end
-
-  -- Get all entities on source platform
-  local entities = source_surface.find_entities()
-
-  -- Clone each entity to target platform
-  for _, entity in pairs(entities) do
-    if entity.valid and entity.name ~= "space-platform-hub" then
-      entity.clone{
-        position = entity.position,
-        surface = target_surface,
-        force = target_platform.force
-      }
+  if not blueprint_string then
+    if player then
+      player.print("[∞ SPA] DEBUG: No cached blueprint string")
     end
+    return false
+  end
+
+  local target_surface = target_platform.surface
+  if not target_surface or not target_surface.valid then
+    if player then
+      player.print("[∞ SPA] DEBUG: Target surface not valid")
+    end
+    return false
+  end
+
+  if player then
+    player.print("[∞ SPA] DEBUG: Creating blueprint inventory...")
+  end
+
+  -- Create temporary blueprint from stored string
+  local inventory = game.create_inventory(1)
+  if not inventory then
+    if player then
+      player.print("[∞ SPA] ERROR: Failed to create inventory")
+    end
+    return false
+  end
+
+  inventory.insert({name = "blueprint"})
+  local blueprint = inventory[1]
+
+  if not blueprint or not blueprint.valid_for_read then
+    if player then
+      player.print("[∞ SPA] ERROR: Blueprint item not valid")
+    end
+    inventory.destroy()
+    return false
+  end
+
+  if player then
+    player.print("[∞ SPA] DEBUG: Importing blueprint...")
+  end
+
+  -- Import the cached blueprint - CHECK RETURN VALUE!
+  local import_result = blueprint.import_stack(blueprint_string)
+  if import_result ~= 0 then
+    if player then
+      player.print("[∞ SPA] ERROR: Blueprint import failed with code: " .. tostring(import_result))
+    end
+    inventory.destroy()
+    return false
+  end
+
+  if player then
+    player.print("[∞ SPA] DEBUG: Building blueprint on platform...")
+  end
+
+  -- Build on target
+  local built_entities = blueprint.build_blueprint{
+    surface = target_surface,
+    force = target_platform.force,
+    position = {x = 0, y = 0},
+    build_mode = defines.build_mode.superforced,
+    raise_built = true
+  }
+
+  inventory.destroy()
+
+  if not built_entities then
+    if player then
+      player.print("[∞ SPA] ERROR: build_blueprint returned nil")
+    end
+    return false
+  end
+
+  if #built_entities == 0 then
+    if player then
+      player.print("[∞ SPA] WARNING: build_blueprint returned 0 entities")
+    end
+    return false
+  end
+
+  if player then
+    player.print("[∞ SPA] SUCCESS: Built " .. #built_entities .. " entities on platform")
   end
 
   return true
@@ -184,15 +251,9 @@ local function can_create_platform(player_index)
     return false, "Player has auto-creation disabled"
   end
 
-  -- Must have copy platform configured
-  if not player_data.copy_platform_index then
-    return false, "No platform selected"
-  end
-
-  -- Get source platform
-  local source_platform = get_source_platform(player)
-  if not source_platform then
-    return false, "Source platform no longer exists"
+  -- Must have cached blueprint
+  if not player_data.cached_blueprint_string then
+    return false, "No platform blueprinted"
   end
 
   -- Check starter pack availability (using source platform's pack with safe fallback)
@@ -270,6 +331,49 @@ script.on_event(defines.events.on_tick, function(event)
       end
     end
   end
+
+  -- Check pending platforms every 60 ticks (~1 second) for blueprint application
+  if event.tick % 60 == 0 then
+    for platform_index, pending in pairs(storage.pending_platforms) do
+      if pending.needs_copy then
+        -- Find the platform
+        local platform = nil
+        local force = game.forces[pending.force_index]
+        if force and force.valid then
+          for _, p in pairs(force.platforms) do
+            if p.index == platform_index and p.valid then
+              platform = p
+              break
+            end
+          end
+        end
+
+        if platform then
+          -- Check if surface and hub are ready
+          if platform.surface and platform.surface.valid and platform.hub and platform.hub.valid then
+            local player = game.players[pending.player_index]
+            if player and player.valid then
+              player.print("[∞ SPA] DEBUG: Periodic check found ready platform, attempting copy...")
+            end
+
+            -- Try to apply blueprint
+            local success = copy_platform_structure(pending.player_index, platform)
+
+            if success then
+              local player = game.players[pending.player_index]
+              if player and player.valid then
+                player.print("[∞ Space Platform Automation] Platform structure copied to: " .. platform.name)
+              end
+
+              -- Mark as complete
+              pending.needs_copy = false
+              storage.pending_platforms[platform_index] = nil
+            end
+          end
+        end
+      end
+    end
+  end
 end)
 
 --- Handle platform state changes for copy application
@@ -284,11 +388,20 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
     return
   end
 
-  -- Check if platform is in a ready state
+  -- DEBUG: Log state changes
+  local player = game.players[pending.player_index]
+  if player and player.valid then
+    player.print("[∞ SPA] DEBUG: Platform state changed to: " .. tostring(event.new_state))
+  end
+
+  -- Check if platform is in a ready state (including post-creation states)
   local ready_states = {
+    defines.space_platform_state.no_schedule,
+    defines.space_platform_state.no_path,
     defines.space_platform_state.waiting_at_station,
     defines.space_platform_state.on_the_path,
-    defines.space_platform_state.waiting_for_departure
+    defines.space_platform_state.waiting_for_departure,
+    defines.space_platform_state.paused
   }
 
   local is_ready = false
@@ -300,23 +413,33 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
   end
 
   if not is_ready then
-    return
-  end
-
-  -- Find source platform and copy structure
-  local source_platform = nil
-  for _, p in pairs(platform.force.platforms) do
-    if p.index == pending.copy_source_index then
-      source_platform = p
-      break
+    if player and player.valid then
+      player.print("[∞ SPA] DEBUG: Platform not in ready state yet")
     end
-  end
-
-  if not source_platform or not source_platform.valid then
     return
   end
 
-  local success = copy_platform_structure(source_platform, platform)
+  -- CRITICAL: Check if surface actually exists and hub is ready
+  if not platform.surface or not platform.surface.valid then
+    if player and player.valid then
+      player.print("[∞ SPA] DEBUG: Surface not valid yet")
+    end
+    return
+  end
+
+  if not platform.hub or not platform.hub.valid then
+    if player and player.valid then
+      player.print("[∞ SPA] DEBUG: Hub not valid yet")
+    end
+    return
+  end
+
+  if player and player.valid then
+    player.print("[∞ SPA] DEBUG: Platform ready! Attempting to copy...")
+  end
+
+  -- Apply cached blueprint to platform
+  local success = copy_platform_structure(pending.player_index, platform)
 
   if success then
     local player = game.players[pending.player_index]

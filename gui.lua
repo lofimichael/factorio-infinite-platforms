@@ -40,6 +40,83 @@ local function get_platform_dropdown_items(force)
   return items, mapping
 end
 
+--- Blueprint a platform and store it for reuse
+--- @param player LuaPlayer The player
+--- @param platform_index uint The platform to blueprint
+--- @return boolean success Whether blueprint succeeded
+local function cache_platform_blueprint(player, platform_index)
+  -- Find the platform
+  local source_platform = nil
+  for _, p in pairs(player.force.platforms) do
+    if p.index == platform_index then
+      source_platform = p
+      break
+    end
+  end
+
+  if not source_platform or not source_platform.valid then
+    return false
+  end
+
+  local source_surface = source_platform.surface
+  if not source_surface or not source_surface.valid then
+    player.print("[∞ Space Platform Automation] Error: Source platform surface not ready")
+    return false
+  end
+
+  -- Calculate bounding box
+  local entities = source_surface.find_entities()
+  if #entities == 0 then
+    storage.player_data[player.index].cached_blueprint_string = nil
+    return true
+  end
+
+  local min_x, min_y = math.huge, math.huge
+  local max_x, max_y = -math.huge, -math.huge
+
+  for _, entity in pairs(entities) do
+    if entity.valid then
+      local pos = entity.position
+      min_x = math.min(min_x, pos.x - 2)
+      min_y = math.min(min_y, pos.y - 2)
+      max_x = math.max(max_x, pos.x + 2)
+      max_y = math.max(max_y, pos.y + 2)
+    end
+  end
+
+  -- Create and export blueprint
+  local inventory = game.create_inventory(1)
+  if not inventory then return false end
+
+  inventory.insert({name = "blueprint"})
+  local blueprint = inventory[1]
+
+  if not blueprint or not blueprint.valid_for_read then
+    inventory.destroy()
+    return false
+  end
+
+  blueprint.create_blueprint{
+    surface = source_surface,
+    force = source_platform.force,
+    area = {{min_x, min_y}, {max_x, max_y}},
+    always_include_tiles = true,
+    include_entities = true,
+    include_modules = true,
+    include_station_names = true,
+    include_trains = true,
+    include_fuel = true
+  }
+
+  -- Export to string for storage
+  local blueprint_string = blueprint.export_stack()
+  inventory.destroy()
+
+  storage.player_data[player.index].cached_blueprint_string = blueprint_string
+  player.print("[∞ Space Platform Automation] Platform blueprinted successfully")
+  return true
+end
+
 --- Get status text for display
 --- @param player LuaPlayer The player
 --- @return LocalisedString Status text
@@ -57,7 +134,7 @@ function gui.get_status_text(player)
   -- Count pending platforms
   local pending_count = 0
   for _, pending in pairs(storage.pending_platforms) do
-    if pending.force_index == player.force.index and pending.needs_blueprint then
+    if pending.force_index == player.force.index and pending.needs_copy then
       pending_count = pending_count + 1
     end
   end
@@ -285,8 +362,11 @@ function gui.on_gui_selection_state_changed(event)
     local mapping = player_data.platform_mapping
     if mapping and mapping[element.selected_index] then
       player_data.copy_platform_index = mapping[element.selected_index]
+      -- Blueprint the source platform immediately
+      cache_platform_blueprint(player, player_data.copy_platform_index)
     else
       player_data.copy_platform_index = nil
+      player_data.cached_blueprint_string = nil  -- Clear cached blueprint
     end
     -- Just update status, don't rebuild entire panel
     gui.update_status(player)
