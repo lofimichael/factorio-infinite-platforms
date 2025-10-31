@@ -1,0 +1,9 @@
+{
+  "name": "space-platform-automation",
+  "version": "2.0.3",
+  "title": "∞ Space Platform Automation",
+  "author": "YourName",
+  "factorio_version": "2.0",
+  "dependencies": ["space-age >= 2.0.0"],
+  "description": "Automatically creates infinite space platforms by copying existing platforms. Features automatic quality inference from source platforms, customizable naming patterns, and resource-based auto-creation. Native GUI integration in Remote View."
+}

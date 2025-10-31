@@ -1,0 +1,89 @@
+---------------------------------------------------------------------------------------------------
+Version: 2.0.3
+Date: 2025
+  Major Changes:
+    - Simplified to copy-only design (removed blueprint system entirely)
+    - Quality now automatically inferred from source platform
+    - Starter pack type inferred from source platform
+  Improvements:
+    - Fixed localization keys (removed custom section headers)
+    - Fixed panel reset issue when selecting platforms
+    - Much simpler GUI with only essential controls
+    - Reduced code size by ~200 lines
+  GUI Changes:
+    - Removed blueprint selector
+    - Removed starter pack dropdown
+    - Removed quality dropdown
+    - Panel no longer resets when changing platform selection
+  Technical:
+    - Uses source_platform.starter_pack directly for quality inference
+    - Removed force_data storage (no more blueprint tracking)
+    - Added gui.update_status() for efficient status updates
+    - Simplified player_data structure
+
+---------------------------------------------------------------------------------------------------
+Version: 2.0.2
+Date: 2025
+  Major Changes:
+    - Completely redesigned GUI system to use floating screen panel
+    - Panel now uses player.gui.screen instead of relative anchoring
+    - Automatic visibility control based on controller_type (Remote View detection)
+    - Panel appears when entering Remote View, hidden in normal play
+    - Manual positioning at x=220, y=100 for optimal placement
+  Improvements:
+    - Added gui.update_panel_visibility() function
+    - Panel visibility updates every 30 ticks (~0.5 seconds)
+    - Much more reliable GUI visibility in Remote View
+  Technical:
+    - Removed relative GUI anchor system (was conditional and unreliable)
+    - Uses defines.controllers.remote for Remote View detection
+    - Floating GUI with manual location control
+
+---------------------------------------------------------------------------------------------------
+Version: 2.0.1
+Date: 2025
+  Bugfixes:
+    - Attempted fix for GUI visibility (changed to relative GUI with anchor)
+    - This version did not work correctly - see 2.0.2 for proper fix
+
+---------------------------------------------------------------------------------------------------
+Version: 2.0.0
+Date: 2025
+  Major Features:
+    - Complete GUI integration into left panel (no more hotkeys!)
+    - Native Factorio dropdowns for all configuration options
+    - Platform copying feature as alternative to blueprints
+    - Choose-elem-button for blueprint selection
+    - Toggle button in top toolbar for easy access
+    - Real-time status display in panel
+  Changes:
+    - Removed hotkey system (Ctrl+Shift+P)
+    - Settings moved from mod settings to integrated GUI
+    - Per-player runtime settings replaced with GUI controls
+  Improvements:
+    - Dropdown for planet/space location selection
+    - Dropdown for starter pack type selection
+    - Dropdown for quality level selection
+    - Dropdown for platform copy source selection
+    - Live preview of naming patterns
+    - Status indicator shows pending platforms
+  Technical:
+    - Comprehensive Factorio API research for GUI integration
+    - Entity cloning for platform copying
+    - Dynamic dropdown population from prototypes
+    - Proper event handling for GUI interactions
+
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2025
+  Features:
+    - Initial release
+    - Automatic space platform creation based on starter pack availability
+    - Per-force blueprint system with auto-paste functionality
+    - Customizable platform naming with pattern variables ({counter}, {tick}, {player}, {random})
+    - Per-player configuration for planet, starter pack type, and quality
+    - GUI for blueprint selection and configuration (Ctrl+Shift+P)
+    - Runtime settings (no restart required for most changes)
+    - Pattern validation with safe fallbacks
+    - Multiplayer support with team-level blueprint sharing
+    - Remote interface for mod integration
