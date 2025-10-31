@@ -1,6 +1,17 @@
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.3
 Date: 2025
+  Bugfixes (2.0.3.5):
+    - CRITICAL: Fixed platform creation only working when viewing target planet surface
+    - Platform creation now works from any view: Remote View, space, any planet surface
+    - Changed has_starter_pack_available() to check logistics on target planet (not player's current location)
+    - Uses force.logistic_networks[surface_name] (API returns dictionary grouped by surface) instead of position-based search
+    - Proper API usage: force.logistic_networks is dictionary[string → array[LuaLogisticNetwork]] keyed by surface name
+    - Made SPA SUCCESS messages conditional on debug_logging flag (built entities, platform activated)
+    - Complete console silence during normal operation - all messages now behind debug flag
+---------------------------------------------------------------------------------------------------
+Version: 2.0.3 (previous releases)
+Date: 2025
   Major Changes:
     - Simplified to copy-only design (removed blueprint system entirely)
     - Quality now automatically inferred from source platform

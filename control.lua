@@ -109,15 +109,29 @@ local function has_starter_pack_available(force, player, starter_pack)
     end
   end
 
-  -- Check logistics network at player location
-  local surface = player.surface
-  local position = player.position
-  local networks = surface.find_logistic_networks_by_construction_area(position, force)
+  -- Get target planet surface where platform will be launched from
+  -- This works regardless of where the player is currently viewing from (Remote View, space, etc.)
+  local player_data = storage.player_data[player.index]
+  local planet_name = player_data.target_planet or "nauvis"
+  local planet = game.planets[planet_name]
 
-  for _, network in pairs(networks) do
-    local available = network.get_item_count({name = starter_pack_name, quality = quality_name})
-    if available > 0 then
-      return true
+  if not planet or not planet.surface then
+    return false
+  end
+
+  local target_surface = planet.surface
+  local surface_name = target_surface.name
+
+  -- force.logistic_networks is a dictionary[string → array[LuaLogisticNetwork]] grouped by surface name
+  -- Access networks for the target surface directly using surface name as key
+  local networks = force.logistic_networks[surface_name]
+
+  if networks then
+    for _, network in pairs(networks) do
+      local available = network.get_item_count({name = starter_pack_name, quality = quality_name})
+      if available > 0 then
+        return true
+      end
     end
   end
 
@@ -231,7 +245,7 @@ local function copy_platform_structure(player_index, target_platform)
     return false
   end
 
-  if player then
+  if player and player_data and player_data.debug_logging then
     player.print("[∞ SPA] SUCCESS: Built " .. #built_entities .. " entities on platform")
   end
 
@@ -261,7 +275,8 @@ local function activate_platform(platform, player_index, reason)
   platform.paused = false
 
   local player = game.players[player_index]
-  if player and player.valid then
+  local player_data = storage.player_data[player_index]
+  if player and player.valid and player_data and player_data.debug_logging then
     player.print("[∞ Space Platform Automation] Platform activated: " .. platform.name .. " (reason: " .. reason .. ")")
   end
 
