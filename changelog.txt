@@ -10,6 +10,7 @@ Date: 2025
     - Fixed panel reset issue when selecting platforms
     - Much simpler GUI with only essential controls
     - Reduced code size by ~200 lines
+    - Auto-activation: Platforms automatically unpause when construction completes
   GUI Changes:
     - Removed blueprint selector
     - Removed starter pack dropdown
@@ -28,6 +29,11 @@ Date: 2025
     - Added error handling for import_stack() return values
     - Added force validation in periodic check
     - Fixed tile copying: changed always_include_tiles from false to true for contiguous ground
+  Features (2.0.3.2):
+    - Auto-activation: Platforms pause after blueprint application, then automatically unpause when construction completes
+    - Smart timeout: Platforms activate after 5 minutes of no construction progress (handles unreachable ghosts)
+    - Progress tracking: Monitors ghost entity count every 2 seconds to detect construction completion or stalls
+    - Schedules preserved: Blueprint system automatically copies platform schedules (no manual intervention needed)
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.2

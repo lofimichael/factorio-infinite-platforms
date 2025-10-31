@@ -231,6 +231,47 @@ local function copy_platform_structure(player_index, target_platform)
     player.print("[∞ SPA] SUCCESS: Built " .. #built_entities .. " entities on platform")
   end
 
+  -- Pause platform to prevent movement during construction
+  target_platform.paused = true
+
+  -- Count initial ghost entities
+  local ghost_count = target_surface.count_entities_filtered{name = "entity-ghost"}
+
+  if player then
+    player.print("[∞ SPA] DEBUG: Platform paused with " .. ghost_count .. " ghosts pending construction")
+  end
+
+  return true
+end
+
+--- Activate a platform (unpause) after construction completes
+--- @param platform LuaSpacePlatform The platform to activate
+--- @param player_index uint The player index
+--- @param reason string Reason for activation (e.g., "construction complete", "timeout")
+local function activate_platform(platform, player_index, reason)
+  if not platform or not platform.valid then
+    return false
+  end
+
+  -- Unpause to enable automatic mode
+  platform.paused = false
+
+  local player = game.players[player_index]
+  if player and player.valid then
+    player.print("[∞ Space Platform Automation] Platform activated: " .. platform.name .. " (reason: " .. reason .. ")")
+  end
+
+  -- Clean up pending entry if nothing else is pending
+  local pending = storage.pending_platforms[platform.index]
+  if pending then
+    pending.needs_activation = false
+
+    -- Remove from pending if no other flags are set
+    if not pending.needs_copy and not pending.needs_activation then
+      storage.pending_platforms[platform.index] = nil
+    end
+  end
+
   return true
 end
 
@@ -365,10 +406,56 @@ script.on_event(defines.events.on_tick, function(event)
                 player.print("[∞ Space Platform Automation] Platform structure copied to: " .. platform.name)
               end
 
-              -- Mark as complete
+              -- Mark copy complete and set up activation tracking
               pending.needs_copy = false
-              storage.pending_platforms[platform_index] = nil
+              pending.needs_activation = true
+              pending.last_ghost_count = platform.surface.count_entities_filtered{name = "entity-ghost"}
+              pending.no_progress_ticks = 0
             end
+          end
+        end
+      end
+    end
+  end
+
+  -- Monitor construction progress and activate platforms every 120 ticks (~2 seconds)
+  if event.tick % 120 == 0 then
+    for platform_index, pending in pairs(storage.pending_platforms) do
+      if pending.needs_activation then
+        -- Find the platform
+        local platform = nil
+        local force = game.forces[pending.force_index]
+        if force and force.valid then
+          for _, p in pairs(force.platforms) do
+            if p.index == platform_index and p.valid then
+              platform = p
+              break
+            end
+          end
+        end
+
+        if platform and platform.surface and platform.surface.valid then
+          -- Count current ghost entities
+          local current_ghosts = platform.surface.count_entities_filtered{name = "entity-ghost"}
+
+          -- Construction complete - activate immediately
+          if current_ghosts == 0 then
+            activate_platform(platform, pending.player_index, "construction complete")
+
+          -- Check for construction progress
+          elseif current_ghosts == pending.last_ghost_count then
+            -- No progress made - increment stall counter
+            pending.no_progress_ticks = pending.no_progress_ticks + 120
+
+            -- Timeout after 5 minutes (18,000 ticks) of no progress
+            if pending.no_progress_ticks >= 18000 then
+              activate_platform(platform, pending.player_index, "timeout - construction stalled")
+            end
+
+          else
+            -- Progress made - reset stall counter and update ghost count
+            pending.no_progress_ticks = 0
+            pending.last_ghost_count = current_ghosts
           end
         end
       end
@@ -447,9 +534,11 @@ script.on_event(defines.events.on_space_platform_changed_state, function(event)
       player.print("[∞ Space Platform Automation] Platform structure copied to: " .. platform.name)
     end
 
-    -- Mark as complete
+    -- Mark copy complete and set up activation tracking
     pending.needs_copy = false
-    storage.pending_platforms[platform.index] = nil
+    pending.needs_activation = true
+    pending.last_ghost_count = platform.surface.count_entities_filtered{name = "entity-ghost"}
+    pending.no_progress_ticks = 0
   end
 end)
 
