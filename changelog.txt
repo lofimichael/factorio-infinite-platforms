@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 2.0.4
+Date: 2025
+  Bugfixes:
+    - CRITICAL: Fixed platform dropdown showing empty in new saves
+    - Added platform_mapping and planet_mapping initialization to player_data
+    - Dropdown handlers now regenerate mappings on-demand for robustness
+    - Eliminates save-specific state dependency for dropdown population
+---------------------------------------------------------------------------------------------------
 Version: 2.0.3
 Date: 2025
   GUI/UX Improvements (2.0.3.6):
