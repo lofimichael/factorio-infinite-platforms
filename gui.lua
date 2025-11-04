@@ -25,16 +25,36 @@ end
 
 --- Get force platforms for copy dropdown
 --- @param force LuaForce The force
+--- @param player LuaPlayer|nil Optional player for debug logging
 --- @return table Array of platform names
-local function get_platform_dropdown_items(force)
-  local items = {{"space-platform-automation.panel-no-copy"}}
+local function get_platform_dropdown_items(force, player)
+  local items = {"-- No Copy --"}  -- Plain string for consistency
   local mapping = {[1] = nil}
 
+  local player_data = player and storage.player_data[player.index]
+  local debug = player_data and player_data.debug_logging
+
+  if debug then
+    player.print("[∞ SPA DEBUG] Loading platforms for dropdown...")
+  end
+
+  local total_count = 0
+  local valid_count = 0
+
   for _, platform in pairs(force.platforms) do
+    total_count = total_count + 1
     if platform and platform.valid then
       table.insert(items, platform.name)
       mapping[#items] = platform.index
+      valid_count = valid_count + 1
+      if debug then
+        player.print("[∞ SPA DEBUG] Added platform: '" .. platform.name .. "' (index: " .. platform.index .. ")")
+      end
     end
+  end
+
+  if debug then
+    player.print("[∞ SPA DEBUG] Platform scan complete: " .. total_count .. " total, " .. valid_count .. " valid, " .. (#items - 1) .. " in dropdown")
   end
 
   return items, mapping
@@ -177,6 +197,10 @@ function gui.create_main_panel(player)
 
   local player_data = storage.player_data[player.index]
 
+  if player_data.debug_logging then
+    player.print("[∞ SPA DEBUG] Creating main panel...")
+  end
+
   -- Create main frame as floating screen GUI
   local frame = player.gui.screen.add{
     type = "frame",
@@ -233,7 +257,7 @@ function gui.create_main_panel(player)
     caption = {"space-platform-automation.panel-copy"}
   }
 
-  local platform_items, platform_mapping = get_platform_dropdown_items(player.force)
+  local platform_items, platform_mapping = get_platform_dropdown_items(player.force, player)
   storage.player_data[player.index].platform_mapping = platform_mapping
 
   copy_flow.add{
@@ -242,6 +266,10 @@ function gui.create_main_panel(player)
     items = platform_items,
     selected_index = 1
   }
+
+  if player_data.debug_logging then
+    player.print("[∞ SPA DEBUG] Dropdown created with " .. #platform_items .. " items")
+  end
 
   -- Planet dropdown (shortened)
   local planet_flow = frame.add{
@@ -314,9 +342,15 @@ function gui.toggle_panel(player)
   local player_data = storage.player_data[player.index]
 
   if panel then
-    panel.visible = not panel.visible
-    -- Track manual close state
-    player_data.panel_manually_closed = not panel.visible
+    if panel.visible then
+      -- Close the panel
+      panel.visible = false
+      player_data.panel_manually_closed = true
+    else
+      -- Recreate the panel to refresh dropdown with new platforms
+      gui.create_main_panel(player)
+      player_data.panel_manually_closed = false
+    end
   else
     gui.create_main_panel(player)
     player_data.panel_manually_closed = false
@@ -438,7 +472,7 @@ function gui.on_gui_selection_state_changed(event)
 
   elseif element.name == "spa_copy_platform_dropdown" then
     -- Regenerate mapping on-demand for robustness
-    local _, mapping = get_platform_dropdown_items(player.force)
+    local _, mapping = get_platform_dropdown_items(player.force, player)
     if mapping and mapping[element.selected_index] then
       player_data.copy_platform_index = mapping[element.selected_index]
       -- Blueprint the source platform immediately

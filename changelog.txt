@@ -1,4 +1,28 @@
 ---------------------------------------------------------------------------------------------------
+Version: 2.0.6
+Date: 2025
+  Bugfixes:
+    - CRITICAL: Fixed dropdown not refreshing when panel is toggled open
+    - Panel now recreates (instead of just showing) when toggled, refreshing all data
+    - Dropdown now always shows current platforms instead of stale data from panel creation
+    - Debug messages now appear when panel opens (create_main_panel actually runs)
+  Technical:
+    - Changed toggle_panel() to recreate panel on open instead of toggling visibility
+    - Panel close still just hides (performance), but open rebuilds everything
+    - Preserves all state (debug checkbox, settings) by reading from storage
+---------------------------------------------------------------------------------------------------
+Version: 2.0.5
+Date: 2025
+  Bugfixes:
+    - CRITICAL: Fixed platform dropdown data type inconsistency causing empty display
+    - Changed first dropdown item from LocalisedString table to plain string for type consistency
+    - All dropdown items now use consistent plain string format (matches working planet dropdown)
+  Debug Features:
+    - Added comprehensive platform enumeration logging (shows total/valid/dropdown counts)
+    - Platform scan now logs each platform added with name and index
+    - Panel creation now logs dropdown item count
+    - All new debug messages conditional on debug_logging flag
+---------------------------------------------------------------------------------------------------
 Version: 2.0.4
 Date: 2025
   Bugfixes:
