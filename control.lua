@@ -18,7 +18,9 @@ script.on_init(function()
       copy_platform_index = nil,
       cached_blueprint_string = nil,
       panel_manually_closed = true,
-      debug_logging = false
+      debug_logging = false,
+      platform_mapping = {},
+      planet_mapping = {}
     }
 
     -- Initialize GUI
@@ -36,7 +38,9 @@ script.on_event(defines.events.on_player_created, function(event)
     copy_platform_index = nil,
     cached_blueprint_string = nil,
     panel_manually_closed = true,
-    debug_logging = false
+    debug_logging = false,
+    platform_mapping = {},
+    planet_mapping = {}
   }
 
   local player = game.players[event.player_index]

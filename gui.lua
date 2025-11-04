@@ -430,13 +430,15 @@ function gui.on_gui_selection_state_changed(event)
   local player_data = storage.player_data[player.index]
 
   if element.name == "spa_planet_dropdown" then
-    local mapping = player_data.planet_mapping
+    -- Regenerate mapping on-demand for robustness
+    local _, mapping = get_space_location_dropdown_items(player)
     if mapping and mapping[element.selected_index] then
       player_data.target_planet = mapping[element.selected_index]
     end
 
   elseif element.name == "spa_copy_platform_dropdown" then
-    local mapping = player_data.platform_mapping
+    -- Regenerate mapping on-demand for robustness
+    local _, mapping = get_platform_dropdown_items(player.force)
     if mapping and mapping[element.selected_index] then
       player_data.copy_platform_index = mapping[element.selected_index]
       -- Blueprint the source platform immediately
